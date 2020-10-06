@@ -1,9 +1,10 @@
 -> Tema 3
 Implementar a transformação de escala, que aumenta ou diminui a resolução espacial de uma imagem. 
 A resolução de saída deve ser um parâmetro definido pelo usuário  e  não  precisa,  necessariamente,  manter  a  razão  de  aspecto  da  imagem  de saída igual a da imagem de entrada.
-O processo de reamostragem de cores deve ser realizado por interpolação bilinear e bicúbica. As imagens devem ser lidas do disco e os resultados devem ser salvos em disco, para posterior recuperação.
+O processo de reamostragem de cores deve ser realizado por interpolação bilinear e bicúbica. 
+As imagens devem ser lidas do disco e os resultados devem ser salvos em disco, para posterior recuperação.
 
 -> Possivel separação de Implementação?
 * Entrada: recebe a imagem e consegue processar cada pixel dela?
-* Aslgoritmo de Escala: aplica o algoritmo que altera a escala da imagem recebida?
+* Algoritmo de Escala: aplica o algoritmo que altera a escala da imagem recebida?
 * Coloração: recebe a imagem com escala nova e aplica as cores de maneira correta?
