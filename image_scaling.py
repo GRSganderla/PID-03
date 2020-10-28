@@ -10,40 +10,43 @@ import progressbar
 def u(s,a):
     if (abs(s) >=0) & (abs(s) <=1):
         return (a+2)*(abs(s)**3)-(a+3)*(abs(s)**2)+1
+    
     elif (abs(s) > 1) & (abs(s) <= 2):
         return a*(abs(s)**3)-(5*a)*(abs(s)**2)+(8*a)*abs(s)-4*a
+    
     return 0
 
-def padding(img,H,W,C):
-    zimg = np.zeros((H+4,W+4,C))
-    zimg[2:H+2,2:W+2,:C] = img
+def padding( imagem, height, width, channel):
+    imagem_preenchida                                                        = np.zeros(( height + 4, width + 4, channel))
+    imagem_preenchida[2:height + 2, 2:width + 2, : channel]                  = imagem
     
-    zimg[2:H+2,0:2,:C]=img[:,0:1,:C]
-    zimg[H+2:H+4,2:W+2,:]=img[H-1:H,:,:]
-    zimg[2:H+2,W+2:W+4,:]=img[:,W-1:W,:]
-    zimg[0:2,2:W+2,:C]=img[0:1,:,:C]
+    imagem_preenchida[2:height + 2, 0 : 2, :channel]                         = imagem[: , 0 : 1, :channel]
+    imagem_preenchida[height + 2:height + 4, 2:width + 2, :]                 = imagem[height - 1 :height, : , : ]
+    imagem_preenchida[2:height + 2, width + 2:width + 4, :]                  = imagem[: , width - 1:width , : ]
+    imagem_preenchida[0:2, 2 :width + 2, :channel]                           = imagem[ 0:1, : , :channel]
     
-    zimg[0:2,0:2,:C]=img[0,0,:C]
-    zimg[H+2:H+4,0:2,:C]=img[H-1,0,:C]
-    zimg[H+2:H+4,W+2:W+4,:C]=img[H-1,W-1,:C]
-    zimg[0:2,W+2:W+4,:C]=img[0,W-1,:C]
+    imagem_preenchida[0:2 , 0:2 , :channel]                                  = imagem[0 , 0, :channel]
+    imagem_preenchida[height + 2:height + 4, 0:2 , :channel]                 = imagem[height - 1, 0, :channel]
+    imagem_preenchida[height + 2:height + 4, width + 2:width + 4, :channel]  = imagem[height - 1, width - 1, :channel]
+    imagem_preenchida[ 0:2, width + 2:width + 4, :channel]                   = imagem[0, width - 1, :channel]
     
-    return zimg
+    return imagem_preenchida
 
-def bicubic(img, dW:int, dH:int, a):
-    H,W,C = img.shape
+def bicubic(imagem, novo_width:int, novo_height:int, a):
+    height, width, channel = imagem.shape
 
-    img = padding(img, H, W, C)
+    imagem = padding(imagem, height, width, channel)
 
-    hW = 1/ (dW/W)
-    hH = 1/ (dH/H)
+    hW = 1/ (novo_width/width)
+    hH = 1/ (novo_height/height)
 
-    dst = np.zeros((dH, dW, 3))
-    bar = progressbar.ProgressBar(max_value=C*dW*dH)
+    dst = np.zeros((novo_height, novo_width, 3))
+    bar = progressbar.ProgressBar(max_value=(channel * novo_width * novo_height))
 
-    for c in range(C):
-        for j in range(dH):
-            for i in range(dW):
+    for canal in range(Channel):
+        for j in range(novo_height):
+            for i in range(novo_width):
+                
                 x, y = i * hW + 2 , j * hH + 2
 
                 x1 = 1 + x - math.floor(x)
@@ -57,31 +60,34 @@ def bicubic(img, dW:int, dH:int, a):
                 y4 = math.floor(y) + 2 - y
 
                 mat_l = np.matrix([[u(x1,a),u(x2,a),u(x3,a),u(x4,a)]])
-                mat_m = np.matrix([[img[int(y-y1),int(x-x1),c],img[int(y-y2),int(x-x1),c],img[int(y+y3),int(x-x1),c],img[int(y+y4),int(x-x1),c]],
-                                    [img[int(y-y1),int(x-x2),c],img[int(y-y2),int(x-x2),c],img[int(y+y3),int(x-x2),c],img[int(y+y4),int(x-x2),c]],
-                                    [img[int(y-y1),int(x+x3),c],img[int(y-y2),int(x+x3),c],img[int(y+y3),int(x+x3),c],img[int(y+y4),int(x+x3),c]],
-                                    [img[int(y-y1),int(x+x4),c],img[int(y-y2),int(x+x4),c],img[int(y+y3),int(x+x4),c],img[int(y+y4),int(x+x4),c]]])
+                mat_m = np.matrix([[imagem[int(y-y1),int(x-x1),c],imagem[int(y-y2),int(x-x1),c],imagem[int(y+y3),int(x-x1),c],imagem[int(y+y4),int(x-x1),c]],
+                                    [imagem[int(y-y1),int(x-x2),c],imagem[int(y-y2),int(x-x2),c],imagem[int(y+y3),int(x-x2),c],imagem[int(y+y4),int(x-x2),c]],
+                                    [imagem[int(y-y1),int(x+x3),c],imagem[int(y-y2),int(x+x3),c],imagem[int(y+y3),int(x+x3),c],imagem[int(y+y4),int(x+x3),c]],
+                                    [imagem[int(y-y1),int(x+x4),c],imagem[int(y-y2),int(x+x4),c],imagem[int(y+y3),int(x+x4),c],imagem[int(y+y4),int(x+x4),c]]])
+                
                 mat_r = np.matrix([[u(y1,a)],[u(y2,a)],[u(y3,a)],[u(y4,a)]])
                 dst[j, i, c] = np.dot(np.dot(mat_l, mat_m),mat_r)
-                bar.update(c*(dW*dH) + j*dW + i)
+
+
+                bar.update(c*(novo_width * novo_height) + j*novo_width + i)
 
     return dst
 
-def bilinear(img, dW:int, dH:int):
+def bilinear(imagem, novo_width:int, novo_height:int):
 
-    H, W, C = img.shape
-    img = padding(img, H, W, C)
+    H, W, C = imagem.shape
+    imagem = padding(imagem, H, W, C)
 
-    ty = H/dH
-    tx = W/dW
+    ty = H/novo_height
+    tx = W/novo_width
 
-    dst = np.zeros((dH, dW, 3))
+    dst = np.zeros((novo_height, novo_width, 3))
    
-    bar = progressbar.ProgressBar(max_value=C*dW*dH)
+    bar = progressbar.ProgressBar(max_value=C*novo_width*novo_height)
 
     for c in range(C):
-      for j in range(dH):
-        for i in range(dW):
+      for j in range(novo_height):
+        for i in range(novo_width):
           
             x = int (tx * i)
             y = int (ty * j)
@@ -89,74 +95,83 @@ def bilinear(img, dW:int, dH:int):
             x_diff = (tx * i) - x
             y_diff = (ty * j) - y
 
-            dst[j, i, c] = img[y, x, c] * (1 - x_diff) * (1 - y_diff) + img[y, x+1, c] * (1-y_diff) * (x_diff) + img[y+1, x, c] * (y_diff) * (1-x_diff) + img[y+1, x+1, c] * (y_diff) * (x_diff)
+            dst[j, i, c] = imagem[y, x, c] * (1 - x_diff) * (1 - y_diff) + imagem[y, x+1, c] * (1-y_diff) * (x_diff) + imagem[y+1, x, c] * (y_diff) * (1-x_diff) + imagem[y+1, x+1, c] * (y_diff) * (x_diff)
 
-            bar.update(c*(dW*dH) + j*dW + i)
+            bar.update(c*(novo_width*novo_height) + j*novo_width + i)
 
     return dst
 
-if sys.argv[1] == ['-h', '--help']:
-    print('image_scaling.py <nome_arquivo> <tipo_de_interpolação> [<nome_arquivo_destino>]')
-    print('tipo_de_interpolação: informe o tipo de interpolação, -b para interpolação bilinear e -B para interpolação bicúbica. Seguido do novo width e height da imagem')
-    print('Ex: -b=1920_1080; -B=520_480; -b=720_1080')
-    sys.exit()
-
-if not sys.argv[1].endswith(('.png', '.jpg', '.jpeg')):
-    print('Extensão de arquivo não é aceitável')
-    sys.exit()
-
-if not re.match('-b=(\d+)_(\d+)', sys.argv[2]) and not re.match('-B=(\d+)_(\d+)', sys.argv[2]):
-    print('Não informado o tipo de escalamento [Bilinear, Bicúbica]')
-    sys.exit()
-
 if __name__ == "__main__":
-    source_img = sys.argv[1]
+
+    if len(sys.argv) == 1:
+        print("Use 'image_scaling.py [-h | --help]' para informações de uso")
+        sys.exit()
+
+    if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+        print('Exemplo de execução:')
+        print('                     image_scaling.py <nome_arquivo> <tipo_de_interpolação> [<nome_arquivo_imagem_destino>]')
+        print('')
+        print('tipo_de_interpolação: informe o tipo de interpolação, -b para interpolação bilinear e -B para interpolação bicúbica. Seguido do novo width e height da imagem')
+        print('                      Ex: -b=1920_1080; -B=520_480; -b=720_1080')
+        sys.exit()
+
+    if not sys.argv[1].endswith(('.png', '.jpg', '.jpeg')):
+        print('Extensão de arquivo não é aceitável')
+        sys.exit()
+
+    if not re.match('-b=(\d+)_(\d+)', sys.argv[2]) and not re.match('-B=(\d+)_(\d+)', sys.argv[2]):
+        print('Não informado o tipo de escalamento [Bilinear, Bicúbica] e tamanho novo da imagem')
+        print('Exemplo: -b=1080_720 para usar interpolação bilinear com resolução de 1080x720')
+        print('Exemplo: -B=1920_1080 para usar interpolação bicúbica com resolução de 1920x1080')
+        sys.exit()
+
+    imagem_fonte = sys.argv[1]
     mode = sys.argv[2]
 
-    dW, dH = (re.findall('\d+', mode))
-    dW, dH = int(dW), int(dH)
+    novo_width, novo_height = (re.findall('\d+', mode))
+    novo_width, novo_height = int(novo_width), int(novo_height)
 
-    img = cv2.imread(source_img)
-
-    a = -1/2
+    imagem = cv2.imread(imagem_fonte)
 
     if len(sys.argv) == 4 and not sys.argv[3].endswith(('.png', '.jpg', '.jpeg')):
-        print(f"Formato do Arquivo não aceitavel, utilizando {source_img[:-4] + mode[:2] + source_img[len(source_img)-4:]}")
+        print(f"Formato do Arquivo não aceitavel, utilizando {imagem_fonte[:-4] + mode[:2] + imagem_fonte[len(imagem_fonte)-4:]}")
 
-        destino = source_img[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicúbica') + source_img[len(source_img)-4:]
-        temp = destino
+        imagem_destino = imagem_fonte[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicúbica') + imagem_fonte[len(imagem_fonte)-4:]
+        temp = imagem_destino
         i = 1 
         while glob(temp):
             print(f"Arquivo existente no diretório, utilizando {i} para identificar novo arquivo")
-            temp = destino[:-4] + 'f({i})' + destino[len(source_img)-4:]
+            temp = imagem_destino[:-4] + 'f({i})' + imagem_destino[len(imagem_fonte)-4:]
             i += 1
-        destino = temp
+        imagem_destino = temp
 
     elif len(sys.argv) == 3:
-        print(f"Arquivo de destino não informado, utilizando {source_img[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicúbica') + source_img[len(source_img)-4:]}")
-        destino = source_img[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicubica') + source_img[len(source_img)-4:]
-        temp = destino
+        print(f"Arquivo de imagem_destino não informado, utilizando {imagem_fonte[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicúbica') + imagem_fonte[len(imagem_fonte)-4:]}")
+        imagem_destino = imagem_fonte[:-4] + ('-bilinear' if mode[:2] == '-b' else '-bicubica') + imagem_fonte[len(imagem_fonte)-4:]
+        temp = imagem_destino
         i = 1
         
         while glob(temp):
             print(f"Arquivo existente no diretório, utilizando {i} para identificar novo arquivo")
-            temp = destino[:-4] + f'({i})' + destino[len(destino)-4:]
+            temp = imagem_destino[:-4] + f'({i})' + imagem_destino[len(imagem_destino)-4:]
             i += 1
-        destino = temp
+        imagem_destino = temp
     else: 
-        destino = sys.argv[3]
+        imagem_destino = sys.argv[3]
 
-        temp = destino
+        temp = imagem_destino
         i = 1
         while glob(temp):
             print(f"Arquivo existente no diretório, utilizando {i} para identificar novo arquivo")
-            temp = destino[:-4] + f'({i})' + destino[len(destino)-4:]
+            temp = imagem_destino[:-4] + f'({i})' + imagem_destino[len(imagem_destino)-4:]
             i += 1
-        destino = temp
+        imagem_destino = temp
 
     if(mode[:2] == '-b'):
-        dst = bilinear(img, dW, dH)
-        cv2.imwrite(destino, dst)
+        dst = bilinear(imagem, novo_width, novo_height)
+        cv2.imwrite(imagem_destino, dst)
+
     elif(mode[:2] == '-B'):
-        dst = bicubic(img, dW, dH, a)
-        cv2.imwrite(destino, dst)
+        a = -1/2
+        dst = bicubic(imagem, novo_width, novo_height, a)
+        cv2.imwrite(imagem_destino, dst)
