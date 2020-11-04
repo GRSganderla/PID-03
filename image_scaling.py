@@ -16,34 +16,34 @@ def convolucao_bicubica(ponto,a):
     
     return 0
 
-def preenchimento(imagem, height, width, channel):
-    imagem_preenchida                                                        = np.zeros(( height + 4, width + 4, channel))
-    imagem_preenchida[2:height + 2, 2:width + 2, : channel]                  = imagem
+def preenchimento(imagem, height, width, canais):
+    imagem_preenchida                                                        = np.zeros(( height + 4, width + 4, canais))
+    imagem_preenchida[2:height + 2, 2:width + 2, : canais]                  = imagem
     
-    imagem_preenchida[2:height + 2, 0 : 2, :channel]                         = imagem[: , 0 : 1, :channel]
+    imagem_preenchida[2:height + 2, 0 : 2, :canais]                         = imagem[: , 0 : 1, :canais]
     imagem_preenchida[height + 2:height + 4, 2:width + 2, :]                 = imagem[height - 1 :height, : , : ]
     imagem_preenchida[2:height + 2, width + 2:width + 4, :]                  = imagem[: , width - 1:width , : ]
-    imagem_preenchida[0:2, 2 :width + 2, :channel]                           = imagem[ 0:1, : , :channel]
+    imagem_preenchida[0:2, 2 :width + 2, :canais]                           = imagem[ 0:1, : , :canais]
     
-    imagem_preenchida[0:2 , 0:2 , :channel]                                  = imagem[0 , 0, :channel]
-    imagem_preenchida[height + 2:height + 4, 0:2 , :channel]                 = imagem[height - 1, 0, :channel]
-    imagem_preenchida[height + 2:height + 4, width + 2:width + 4, :channel]  = imagem[height - 1, width - 1, :channel]
-    imagem_preenchida[0:2, width + 2:width + 4, :channel]                    = imagem[0, width - 1, :channel]
+    imagem_preenchida[0:2 , 0:2 , :canais]                                  = imagem[0 , 0, :canais]
+    imagem_preenchida[height + 2:height + 4, 0:2 , :canais]                 = imagem[height - 1, 0, :canais]
+    imagem_preenchida[height + 2:height + 4, width + 2:width + 4, :canais]  = imagem[height - 1, width - 1, :canais]
+    imagem_preenchida[0:2, width + 2:width + 4, :canais]                    = imagem[0, width - 1, :canais]
     
     return imagem_preenchida
 
 def bicubic(imagem, novo_width:int, novo_height:int, a):
-    height, width, channel = imagem.shape
+    height, width, canais = imagem.shape
 
-    imagem = preenchimento(imagem, height, width, channel)
+    imagem = preenchimento(imagem, height, width, canais)
 
     hW = 1/ (novo_width/width)
     hH = 1/ (novo_height/height)
 
     dst = np.zeros((novo_height, novo_width, 3))
-    bar = progressbar.ProgressBar(max_value=(channel * novo_width * novo_height))
+    bar = progressbar.ProgressBar(max_value=(canais * novo_width * novo_height))
 
-    for canal in range(channel):
+    for canal in range(canais):
         for j in range(novo_height):
             for i in range(novo_width):
                 
@@ -55,32 +55,32 @@ def bicubic(imagem, novo_width:int, novo_height:int, a):
 
                 mat_l = np.matrix([[convolucao_bicubica(conv_x[0], a),convolucao_bicubica(conv_x[1], a),convolucao_bicubica(conv_x[2], a),convolucao_bicubica(conv_x[3], a)]])
 
-                mat_m = np.matrix([ [imagem[int(y - conv_y[0]), int(x - conv_x[0]),c], imagem[int(y - conv_y[1]), int(x - conv_x[0]),c], imagem[int(y + conv_y[2]), int(x - conv_x[0]),c], imagem[int(y + conv_y[3]), int(x - conv_x[0]),c]],
-                                    [imagem[int(y - conv_y[0]), int(x - conv_x[1]),c], imagem[int(y - conv_y[1]), int(x - conv_x[1]),c], imagem[int(y + conv_y[2]), int(x - conv_x[1]),c], imagem[int(y + conv_y[3]), int(x - conv_x[1]),c]],
-                                    [imagem[int(y - conv_y[0]), int(x + conv_x[2]),c], imagem[int(y - conv_y[1]), int(x + conv_x[2]),c], imagem[int(y + conv_y[2]), int(x + conv_x[2]),c], imagem[int(y + conv_y[3]), int(x + conv_x[2]),c]],
-                                    [imagem[int(y - conv_y[0]), int(x + conv_x[3]),c], imagem[int(y - conv_y[1]), int(x + conv_x[3]),c], imagem[int(y + conv_y[2]), int(x + conv_x[3]),c], imagem[int(y + conv_y[3]), int(x + conv_x[3]),c]]])
+                mat_m = np.matrix([ [imagem[int(y - conv_y[0]), int(x - conv_x[0]),canal], imagem[int(y - conv_y[1]), int(x - conv_x[0]),canal], imagem[int(y + conv_y[2]), int(x - conv_x[0]),canal], imagem[int(y + conv_y[3]), int(x - conv_x[0]),canal]],
+                                    [imagem[int(y - conv_y[0]), int(x - conv_x[1]),canal], imagem[int(y - conv_y[1]), int(x - conv_x[1]),canal], imagem[int(y + conv_y[2]), int(x - conv_x[1]),canal], imagem[int(y + conv_y[3]), int(x - conv_x[1]),canal]],
+                                    [imagem[int(y - conv_y[0]), int(x + conv_x[2]),canal], imagem[int(y - conv_y[1]), int(x + conv_x[2]),canal], imagem[int(y + conv_y[2]), int(x + conv_x[2]),canal], imagem[int(y + conv_y[3]), int(x + conv_x[2]),canal]],
+                                    [imagem[int(y - conv_y[0]), int(x + conv_x[3]),canal], imagem[int(y - conv_y[1]), int(x + conv_x[3]),canal], imagem[int(y + conv_y[2]), int(x + conv_x[3]),canal], imagem[int(y + conv_y[3]), int(x + conv_x[3]),canal]]])
                 
                 mat_r = np.matrix([[convolucao_bicubica(conv_y[0], a)], [convolucao_bicubica(conv_y[1],a)], [convolucao_bicubica(conv_y[2],a)], [convolucao_bicubica(conv_y[3],a)]])
                 
-                dst[j, i, c] = np.dot(np.dot(mat_l, mat_m), mat_r)
+                dst[j, i, canal] = np.dot(np.dot(mat_l, mat_m), mat_r)
 
-                bar.update(c*(novo_width * novo_height) + j * novo_width + i)
+                bar.update(canal*(novo_width * novo_height) + j * novo_width + i)
 
     return dst
 
 def bilinear(imagem, novo_width:int, novo_height:int):
 
-    H, W, C = imagem.shape
-    imagem = preenchimento(imagem, H, W, C)
+    height, width, canais = imagem.shape
+    imagem = preenchimento(imagem, height, width, canais)
 
-    ty = H/novo_height
-    tx = W/novo_width
+    ty = height/novo_height
+    tx = width/novo_width
 
     dst = np.zeros((novo_height, novo_width, 3))
    
-    bar = progressbar.ProgressBar(max_value=C*novo_width*novo_height)
+    bar = progressbar.ProgressBar(max_value=canais * novo_width * novo_height)
 
-    for c in range(C):
+    for c in range(canais):
       for j in range(novo_height):
         for i in range(novo_width):
           
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         temp = imagem_destino
         i = 1 
         while glob(temp):
-            print(f"Arquivo existente no diretório, utilizando {i} para identificar novo arquivo")
+            print(f"Arquivo existente no diretório, utilizando ({i}) para identificar novo arquivo")
             temp = imagem_destino[:-4] + 'f({i})' + imagem_destino[len(imagem_fonte)-4:]
             i += 1
         imagem_destino = temp
