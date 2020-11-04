@@ -7,16 +7,16 @@ from glob import glob
 import time
 import progressbar
 
-def u(s,a):
-    if (abs(s) >=0) & (abs(s) <=1):
-        return (a+2)*(abs(s)**3)-(a+3)*(abs(s)**2)+1
+def convolucao_bicubica(ponto,a):
+    if (abs(ponto) >=0) & (abs(ponto) <=1):
+        return (a + 2)*(abs(ponto) * abs(ponto) * abs(ponto))-(a + 3)*(abs(ponto) * abs(ponto)) + 1
     
-    elif (abs(s) > 1) & (abs(s) <= 2):
-        return a*(abs(s)**3)-(5*a)*(abs(s)**2)+(8*a)*abs(s)-4*a
+    elif (abs(ponto) > 1) & (abs(ponto) <= 2):
+        return a*(abs(ponto)*abs(ponto)*abs(ponto))-(5 * a)*(abs(ponto) * abs(ponto))+(8 * a)* abs(ponto) -4 * a
     
     return 0
 
-def padding( imagem, height, width, channel):
+def preenchimento(imagem, height, width, channel):
     imagem_preenchida                                                        = np.zeros(( height + 4, width + 4, channel))
     imagem_preenchida[2:height + 2, 2:width + 2, : channel]                  = imagem
     
@@ -28,14 +28,14 @@ def padding( imagem, height, width, channel):
     imagem_preenchida[0:2 , 0:2 , :channel]                                  = imagem[0 , 0, :channel]
     imagem_preenchida[height + 2:height + 4, 0:2 , :channel]                 = imagem[height - 1, 0, :channel]
     imagem_preenchida[height + 2:height + 4, width + 2:width + 4, :channel]  = imagem[height - 1, width - 1, :channel]
-    imagem_preenchida[ 0:2, width + 2:width + 4, :channel]                   = imagem[0, width - 1, :channel]
+    imagem_preenchida[0:2, width + 2:width + 4, :channel]                    = imagem[0, width - 1, :channel]
     
     return imagem_preenchida
 
 def bicubic(imagem, novo_width:int, novo_height:int, a):
     height, width, channel = imagem.shape
 
-    imagem = padding(imagem, height, width, channel)
+    imagem = preenchimento(imagem, height, width, channel)
 
     hW = 1/ (novo_width/width)
     hH = 1/ (novo_height/height)
@@ -43,40 +43,35 @@ def bicubic(imagem, novo_width:int, novo_height:int, a):
     dst = np.zeros((novo_height, novo_width, 3))
     bar = progressbar.ProgressBar(max_value=(channel * novo_width * novo_height))
 
-    for canal in range(Channel):
+    for canal in range(channel):
         for j in range(novo_height):
             for i in range(novo_width):
                 
                 x, y = i * hW + 2 , j * hH + 2
 
-                x1 = 1 + x - math.floor(x)
-                x2 = x - math.floor(x)
-                x3 = math.floor(x) + 1 - x
-                x4 = math.floor(x) + 2 - x
+                conv_x = [1 + x - math.floor(x), x - math.floor(x), math.floor(x) + 1 - x, math.floor(x) + 2 - x]
 
-                y1 = 1 + y - math.floor(y)
-                y2 = y - math.floor(y)
-                y3 = math.floor(y) + 1 - y
-                y4 = math.floor(y) + 2 - y
+                conv_y = [1 + y - math.floor(y), y - math.floor(y), math.floor(y) + 1 - y, math.floor(y) + 2 - y]
 
-                mat_l = np.matrix([[u(x1,a),u(x2,a),u(x3,a),u(x4,a)]])
-                mat_m = np.matrix([[imagem[int(y-y1),int(x-x1),c],imagem[int(y-y2),int(x-x1),c],imagem[int(y+y3),int(x-x1),c],imagem[int(y+y4),int(x-x1),c]],
-                                    [imagem[int(y-y1),int(x-x2),c],imagem[int(y-y2),int(x-x2),c],imagem[int(y+y3),int(x-x2),c],imagem[int(y+y4),int(x-x2),c]],
-                                    [imagem[int(y-y1),int(x+x3),c],imagem[int(y-y2),int(x+x3),c],imagem[int(y+y3),int(x+x3),c],imagem[int(y+y4),int(x+x3),c]],
-                                    [imagem[int(y-y1),int(x+x4),c],imagem[int(y-y2),int(x+x4),c],imagem[int(y+y3),int(x+x4),c],imagem[int(y+y4),int(x+x4),c]]])
+                mat_l = np.matrix([[convolucao_bicubica(conv_x[0], a),convolucao_bicubica(conv_x[1], a),convolucao_bicubica(conv_x[2], a),convolucao_bicubica(conv_x[3], a)]])
+
+                mat_m = np.matrix([ [imagem[int(y - conv_y[0]), int(x - conv_x[0]),c], imagem[int(y - conv_y[1]), int(x - conv_x[0]),c], imagem[int(y + conv_y[2]), int(x - conv_x[0]),c], imagem[int(y + conv_y[3]), int(x - conv_x[0]),c]],
+                                    [imagem[int(y - conv_y[0]), int(x - conv_x[1]),c], imagem[int(y - conv_y[1]), int(x - conv_x[1]),c], imagem[int(y + conv_y[2]), int(x - conv_x[1]),c], imagem[int(y + conv_y[3]), int(x - conv_x[1]),c]],
+                                    [imagem[int(y - conv_y[0]), int(x + conv_x[2]),c], imagem[int(y - conv_y[1]), int(x + conv_x[2]),c], imagem[int(y + conv_y[2]), int(x + conv_x[2]),c], imagem[int(y + conv_y[3]), int(x + conv_x[2]),c]],
+                                    [imagem[int(y - conv_y[0]), int(x + conv_x[3]),c], imagem[int(y - conv_y[1]), int(x + conv_x[3]),c], imagem[int(y + conv_y[2]), int(x + conv_x[3]),c], imagem[int(y + conv_y[3]), int(x + conv_x[3]),c]]])
                 
-                mat_r = np.matrix([[u(y1,a)],[u(y2,a)],[u(y3,a)],[u(y4,a)]])
-                dst[j, i, c] = np.dot(np.dot(mat_l, mat_m),mat_r)
+                mat_r = np.matrix([[convolucao_bicubica(conv_y[0], a)], [convolucao_bicubica(conv_y[1],a)], [convolucao_bicubica(conv_y[2],a)], [convolucao_bicubica(conv_y[3],a)]])
+                
+                dst[j, i, c] = np.dot(np.dot(mat_l, mat_m), mat_r)
 
-
-                bar.update(c*(novo_width * novo_height) + j*novo_width + i)
+                bar.update(c*(novo_width * novo_height) + j * novo_width + i)
 
     return dst
 
 def bilinear(imagem, novo_width:int, novo_height:int):
 
     H, W, C = imagem.shape
-    imagem = padding(imagem, H, W, C)
+    imagem = preenchimento(imagem, H, W, C)
 
     ty = H/novo_height
     tx = W/novo_width
@@ -95,7 +90,7 @@ def bilinear(imagem, novo_width:int, novo_height:int):
             x_diff = (tx * i) - x
             y_diff = (ty * j) - y
 
-            dst[j, i, c] = imagem[y, x, c] * (1 - x_diff) * (1 - y_diff) + imagem[y, x+1, c] * (1-y_diff) * (x_diff) + imagem[y+1, x, c] * (y_diff) * (1-x_diff) + imagem[y+1, x+1, c] * (y_diff) * (x_diff)
+            dst[j, i, c] =   imagem[  y,  x,  c] * (1 - x_diff) * (1 - y_diff) + imagem[  y, x+1, c] * (1-y_diff) * (x_diff) + imagem[y+1,  x,  c] * (y_diff) * (1-x_diff) + imagem[y+1, x+1, c] * (y_diff) * (x_diff)
 
             bar.update(c*(novo_width*novo_height) + j*novo_width + i)
 
