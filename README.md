@@ -9,7 +9,9 @@ Repositorio para implementação de uma escalador de imagem para o trabalho de t
 
 Se usado o comando:
 > py image_scaling.py -h 
+
 > py image_scaling.py --help
+
 É apresentado todas as opções de uso para o script.
 
 Para alterar a resolução espacial de uma imagem(exemplo.png) para uma resolução de 1080x920 utilizando a interpolação bilinear, se usa a linha de comando:
